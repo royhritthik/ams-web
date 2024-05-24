@@ -1,0 +1,104 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGO_URI")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Post {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  title   String
+  date    DateTime @default(now())
+  content String
+}
+
+model Student {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  regNo     String   @unique
+  password  String
+  email     String   @unique
+  phone     String   @unique
+  Section   Section? @relation(fields: [sectionId], references: [id])
+  sectionId String?  @db.ObjectId
+
+  StudentSeat         StudentSeat[]
+  StudentOnAttendence StudentOnAttendence[]
+}
+
+model Faculty {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  uid      String   @unique
+  password String
+  email    String   @unique
+  phone    String   @unique
+  Course   Course[]
+}
+
+model Section {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  students        Student[]
+  Attendenence    Attendenence[]
+  SectionOnCourse SectionOnCourse[]
+}
+
+model Course {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  code      String
+  credit    Int     @default(0)
+  faculty   Faculty @relation(fields: [facultyId], references: [id])
+  facultyId String  @db.ObjectId
+
+  Attendenence    Attendenence[]
+  SectionOnCourse SectionOnCourse[]
+}
+
+model SectionOnCourse {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  course    Course  @relation(fields: [courseId], references: [id])
+  courseId  String  @db.ObjectId
+  section   Section @relation(fields: [sectionId], references: [id])
+  sectionId String  @db.ObjectId
+}
+
+model StudentOnAttendence {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  attendenence   Attendenence @relation(fields: [attendenenceId], references: [id])
+  attendenenceId String       @db.ObjectId
+  student        Student      @relation(fields: [studentId], references: [id])
+  studentId      String       @db.ObjectId
+  seatNo         String
+
+  @@unique([attendenenceId, studentId, seatNo])
+}
+
+model Attendenence {
+  id   String   @id @default(auto()) @map("_id") @db.ObjectId
+  date DateTime
+
+  course   Course  @relation(fields: [courseId], references: [id])
+  courseId String  @db.ObjectId
+  section  Section @relation(fields: [sectionId], references: [id])
+
+  sectionId String @db.ObjectId
+
+  studentSeat StudentSeat[]
+
+  submitted           Boolean               @default(false)
+  StudentOnAttendence StudentOnAttendence[]
+}
+
+model StudentSeat {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String  @db.ObjectId
+
+  seatNo         String
+  Attendenence   Attendenence? @relation(fields: [attendenenceId], references: [id])
+  attendenenceId String?       @db.ObjectId
+}
